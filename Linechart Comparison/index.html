@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<head>
+  <title>Line Chart</title>
+  <div class="graphic">
+        <div class="head">Comparison of Popularity of 2 Presidents - George Bush and Roman Reagan</div>
+    <div>Data From: <a href="http://www.presidency.ucsb.edu/data/popularity.php">http://www.presidency.ucsb.edu/data/popularity.php</a></div>
+</head>
+<meta charset="utf-8">
+<style>
+
+.graphic {
+    font-family: sans-serif;
+    color: rgb(209, 116, 62);
+    fill: #323;
+    margin: 40px auto;
+}
+
+svg{
+ background-color: #eee; 
+  margin-top: 50px;
+}
+
+path.domain {
+  fill: none;
+}
+
+g.tick > line {
+  stroke: white;
+  stroke-width: 1px;
+}
+
+g.tick > text {
+  text-anchor: middle;
+  fill: #606060;
+}
+
+</style>
+<body>
+<div id="viz"></div>
+
+</body>
+
+
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js" type="text/JavaScript"></script>
+<script>
+
+var width = 500,
+    height = 500;
+
+xScale = d3.scale.linear().domain([0,10]).range([40,760]);
+yScale = d3.scale.linear().domain([0,10]).range([60,830]);
+
+svg = d3.select('#viz')
+    .append('svg')
+    .attr({width: 1500, height: height});
+
+var chartPoints = 100;
+
+    queue()
+    .defer(d3.csv, "bush.csv")
+    .defer(d3.csv, "reagan.csv")
+    .await(function(error, file1, file2) { createChart(file1, file2,"undecided", d3.select("svg").append("g")); });
+
+function createChart(bush, reagan, type, linechart) {
+
+  bush.forEach(function (d) {
+    d.datestamp = new Date(d.start);
+  })
+
+  reagan.forEach(function (d) {
+    d.datestamp = new Date(d.start);
+  })
+
+  var bushExtent = d3.extent(bush.map(function (d) {return d.datestamp}))
+
+  var reaganExtent = d3.extent(reagan.map(function (d) {return d.datestamp}))
+
+  var fullExtent = [Math.min(bushExtent[0], reaganExtent[0]),Math.max(bushExtent[1], reaganExtent[1])]
+
+  var xScale = d3.time.scale().domain(fullExtent).range([0,500])
+
+  var chartExtent = [0,90];
+
+  var yScale = d3.scale.linear().domain(chartExtent).range([480,20]);
+
+  var axis = d3.svg.axis().scale(yScale)
+    .orient("right")
+    .ticks(8)
+    .tickSize(-480)
+    .tickSubdivide(true);
+
+  var line = d3.svg.line()
+  .x(function(d) {return xScale(new Date(d.datestamp))})
+  .y(function(d) {return yScale(d["approval"])})
+  .interpolate("linear");
+
+  linechart.append("g").attr("transform", "translate(480,0)").call(axis);
+
+  linechart.append("path")
+  .style("fill", "none")
+  .style("stroke-width", "2px")
+  .style("stroke", "red")
+  .attr("class", "line")
+  .attr("d", line(bush))
+
+  linechart.append("path")
+  .style("fill", "none")
+  .style("stroke-width", "2px")
+  .style("stroke", "darkblue")
+  .attr("class", "line")
+  .attr("d", line(reagan))
+}
+
+</script>
